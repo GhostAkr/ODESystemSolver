@@ -36,3 +36,40 @@ function get_kval_rk(f::Function, curr_stage::Integer, t::Real, curr_step::Real,
 
     return f(t + c * curr_step, curr_val + subsum)
 end  # get_kval_rk
+
+"""
+	make_step_rk(f::Function, t::Real, prev_val::Vector{Real}, curr_step::Real, 
+		max_stage::Integer, c_coeffs::Tuple{Real}, b_coeffs::Tuple{Real}, 
+		a_coeffs::Tuple{Tuple{Real}})
+
+Make one step of Runge - Kutta method. Return next value.
+
+# Arguments
+- `f::Function`: right part of the system of ODEs;
+- `t::Real: current value of the argument;
+- `prev_val::Vector{Real}`: previous value;
+- `curr_step::Real`: current step value;
+- `max_stage::Integer`: total number of stages;
+- `c_coeffs::Tuple{Real}`: tuple with ``c`` coefficients of the method;
+- `b_coeffs::Tuple{Real}`: tuple with ``b`` coefficients of the method;
+- `a_coeffs::Tuple{Tuple{Real}}`: ``a`` coefficients of the method.
+"""
+function make_step_rk(f::Function, t::Real, prev_val::Vector{Real}, curr_step::Real,
+	max_stage::Integer, c_coeffs::Tuple{Real}, b_coeffs::Tuple{Real}, 
+	a_coeffs::Tuple{Tuple{Real}}
+)
+    # Get k values
+    kvals = Vector{Real}()
+    for stage in 1:max_stage
+        k = get_kval_rk(f, stage, t, curr_step, prev_val, kvals, c_coeffs, a_coeffs)
+        append!(kvals, k)
+    end
+
+    subsum = 0
+    for term_ix in 1:max_stage
+        subsum += (b_coeffs[term_ix] * kvals[tterm_ix])
+    end
+    subsum *= curr_step
+
+    return prev_val + subsum
+end  # make_step_rk
