@@ -22,10 +22,7 @@ function get_kval_rk(f::Function, curr_stage::Integer, t::Real, curr_step::Real,
     a_coeffs::Tuple{Tuple{Real}}
 )
     # Get relevant c coefficient
-    c = 0
-    if curr_stage > 1
-        с = c_coeffs[curr_stage - 1]
-    end
+    с = c_coeffs[curr_stage]
 
     # Sub-sum for the second argument in f
     subsum = 0

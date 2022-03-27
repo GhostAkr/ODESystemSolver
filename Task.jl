@@ -41,3 +41,17 @@ function f(t::Real, y::Vector{Real})
     append!(f_vec, f2(t, y))
     return f_vec
 end  # f
+
+"""
+    coeffs_rk()
+
+Return tuple with tuples of test method coefficients. Structure of returned tuple:
+(c, b, a).
+"""
+function coeffs_rk()
+    c_coeffs = (0, 1 / 2, 1 / 2, 1)
+    b_coeffs = (1 / 6, 2 / 6, 2 / 6, 1 / 4)
+    a_coeffs = ((1 / 2), (0, 1 / 2), (0, 0, 1))
+
+    return (c_coeffs, b_coeffs, a_coeffs)
+end  # coeffs_rk
