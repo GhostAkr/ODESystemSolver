@@ -1,3 +1,5 @@
+include("CustomLogger.jl")
+
 """
 	f1(t::Float64, y::Vector{Float64})
 

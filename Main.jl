@@ -1,5 +1,6 @@
 include("RungeKutta.jl")
 include("Task.jl")
+include("CustomLogger.jl")
 
 """
     test_rk()

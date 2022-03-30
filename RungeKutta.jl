@@ -1,3 +1,5 @@
+include("CustomLogger.jl")
+
 """
 	get_kval_rk(curr_stage::Integer, t::Float64, curr_step::real, curr_val::Vector{Float64}, 
 		prev_kvals::Vector{Vector{Float64}}, c_coeffs::Vector{Float64}, 
