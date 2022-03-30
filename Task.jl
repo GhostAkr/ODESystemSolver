@@ -55,3 +55,20 @@ function coeffs_rk()
 
     return (c_coeffs, b_coeffs, a_coeffs)
 end  # coeffs_rk
+
+"""
+    exact_sol(t::Real)
+
+Returns exact solution as a vector.
+
+# Arguments
+`t::Real`: point in which ``y(t)`` should be returned.
+"""
+function exact_sol(t::Real)
+    sol = Vector{Real}()
+
+    append!(sol, exp(sin(t^2)))
+    append!(sol, exp(cos(t^2)))
+
+    return sol
+end # exact_sol
