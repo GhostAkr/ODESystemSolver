@@ -36,3 +36,5 @@ function test_rk()
 
     println("Max error = ", max_err)
 end  # test_rk
+
+test_rk()

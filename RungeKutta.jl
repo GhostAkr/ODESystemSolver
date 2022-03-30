@@ -1,6 +1,7 @@
 """
-	get_kval_rk(curr_stage::Integer, t::Real, curr_step::real, curr_val::Real, 
-		prev_kvals::Vector{Real}, c_coeffs::Tuple{Real}, a_coeffs::Tuple{Real})
+	get_kval_rk(curr_stage::Integer, t::Float64, curr_step::real, curr_val::Vector{Float64}, 
+		prev_kvals::Vector{Vector{Float64}}, c_coeffs::Vector{Float64}, 
+        a_coeffs::Vector{Float64})
 
 Return value of ``k_i`` for given ``i`` (`curr_stage`).
 
@@ -10,61 +11,61 @@ inside `solve_rk()` function.
 # Arguments
 - `f::Function`: right part of the system of ODEs;
 - `curr_stage::Integer`: current stage (``i`` value);
-- `t::Real`: current value of the argument;
-- `curr_step::Real`: current step value;
-- `curr_val::Real`: current value;
-- `prev_kvals::Real`: values of ``k`` on previous stages;
-- `c_coeffs::Tuple{Real}`: tuple with ``c`` coefficients of the method;
-- `a_coeffs::Tuple{Tuple{Real}}`: ``a`` coefficients of the method.
+- `t::Float64`: current value of the argument;
+- `curr_step::Float64`: current step value;
+- `curr_val::Vector{Float64}`: current value;
+- `prev_kvals::Vector{Vector{Float64}}`: values of ``k`` on previous stages;
+- `c_coeffs::Vector{Float64}`: tuple with ``c`` coefficients of the method;
+- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method.
 """
-function get_kval_rk(f::Function, curr_stage::Integer, t::Real, curr_step::Real, 
-	curr_val::Real, prev_kvals::Vector{Real}, c_coeffs::Tuple{Real}, 
-    a_coeffs::Tuple{Tuple{Real}}
+function get_kval_rk(f::Function, curr_stage::Integer, t::Float64, curr_step::Float64, 
+	curr_val::Vector{Float64}, prev_kvals::Vector{Vector{Float64}}, 
+    c_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}}
 )
     # Get relevant c coefficient
     с = c_coeffs[curr_stage]
 
     # Sub-sum for the second argument in f
-    subsum = 0
+    subsum = zeros(Float64, length(curr_val))
     for term_ix in 1:(curr_stage - 1)
         subsum += (a_coeffs[curr_stage - 1][term_ix] * prev_kvals[term_ix])
     end
     subsum *= curr_step
 
-    return f(t + c * curr_step, curr_val + subsum)
+    return f(t + с * curr_step, curr_val + subsum)
 end  # get_kval_rk
 
 """
-	make_step_rk(f::Function, t::Real, prev_val::Vector{Real}, curr_step::Real, 
-		max_stage::Integer, c_coeffs::Tuple{Real}, b_coeffs::Tuple{Real}, 
-		a_coeffs::Tuple{Tuple{Real}})
+	make_step_rk(f::Function, t::Float64, prev_val::Vector{Float64}, curr_step::Float64, 
+		max_stage::Integer, c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, 
+		a_coeffs::Vector{Tuple{Float64}})
 
 Make one step of Runge - Kutta method. Return next value.
 
 # Arguments
 - `f::Function`: right part of the system of ODEs;
-- `t::Real: current value of the argument;
-- `prev_val::Vector{Real}`: previous value;
-- `curr_step::Real`: current step value;
+- `t::Float64: current value of the argument;
+- `prev_val::Vector{Float64}`: previous value;
+- `curr_step::Float64`: current step value;
 - `max_stage::Integer`: total number of stages;
-- `c_coeffs::Tuple{Real}`: tuple with ``c`` coefficients of the method;
-- `b_coeffs::Tuple{Real}`: tuple with ``b`` coefficients of the method;
-- `a_coeffs::Tuple{Tuple{Real}}`: ``a`` coefficients of the method.
+- `c_coeffs::Vector{Float64}`: tuple with ``c`` coefficients of the method;
+- `b_coeffs::Vector{Float64}`: tuple with ``b`` coefficients of the method;
+- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method.
 """
-function make_step_rk(f::Function, t::Real, prev_val::Vector{Real}, curr_step::Real,
-	max_stage::Integer, c_coeffs::Tuple{Real}, b_coeffs::Tuple{Real}, 
-	a_coeffs::Tuple{Tuple{Real}}
+function make_step_rk(f::Function, t::Float64, prev_val::Vector{Float64}, curr_step::Float64,
+	max_stage::Integer, c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, 
+	a_coeffs::Vector{Vector{Float64}}
 )
     # Get k values
-    kvals = Vector{Real}()
+    kvals = Vector{Vector{Float64}}()
     for stage in 1:max_stage
         k = get_kval_rk(f, stage, t, curr_step, prev_val, kvals, c_coeffs, a_coeffs)
-        append!(kvals, k)
+        push!(kvals, k)
     end
 
-    subsum = 0
+    subsum = zeros(Float64, length(prev_val))
     for term_ix in 1:max_stage
-        subsum += (b_coeffs[term_ix] * kvals[tterm_ix])
+        subsum += (b_coeffs[term_ix] * kvals[term_ix])
     end
     subsum *= curr_step
 
@@ -72,16 +73,16 @@ function make_step_rk(f::Function, t::Real, prev_val::Vector{Real}, curr_step::R
 end  # make_step_rk
 
 """
-    maxnorm(vec::Vector{Real})
+    maxnorm(vec::Vector{Float64})
 
 Computes 'max' norm of given vector `vec`. Max norm can be calculated as follows:
 ``\\underset{i = 1, \\dots n}{\\text{max}} |v_i|``. Return norm of `vec` as one real
 number.
 
 # Arguments
-`vec::Vector{Real}`: vector which norm should be calculated.
+`vec::Vector{Float64}`: vector which norm should be calculated.
 """
-function maxnorm(vec::Vector{Real})
+function maxnorm(vec::Vector{Float64})
     if isempty(vec)
         @error("Trying to calculate norm of empty vector")
     end
@@ -99,17 +100,17 @@ function maxnorm(vec::Vector{Real})
 end  # maxnorm
 
 """
-	solve_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real, 
-		initial_vals::Tuple{Real}, max_stage::Integer, c_coeffs::Tuple{Real}, 
-		b_coeffs::Tuple{Real}, a_coeffs::Tuple{Tuple{Real}})
+    solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
+	    initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, c_coeffs::Vector{Float64},
+	    b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}})
 
 Solve system of ODEs using Runge - Kutta method. System of ODE can be represented as
 follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. To achieve more accurancy
 this method uses Richardson's extrapolation to control step during the computational 
 process.
 
-Return dictionary in following format: `<t>: <y(t)>` where `t` is Real and `y(t)` is
-Vector{Real}.
+Return dictionary in following format: `<t>: <y(t)>` where `t` is Float64 and `y(t)` is
+Vector{Float64}.
 
 Function `f` takes ``t`` and vector ``y`` and returns vector of real values which length
 is equal to the length of ``y``.
@@ -123,24 +124,24 @@ correspond to `max_stage` value.
 
 # Arguments
 - `f::Function`: right part of the system of ODEs;
-- `t_limits::Tuple{Real}`: system argument limits;
-- `initial_step::Real`: initial step;
-- `initial_val::Tuple{Real}`: initial values (``y_0``);
-- `tol::Real`: target tolerance;
+- `t_limits::Tuple{Float64, Float64}`: system argument limits;
+- `initial_step::Float64`: initial step;
+- `initial_val::Vector{Float64}`: initial values (``y_0``);
+- `tol::Float64`: target tolerance;
 - `max_stage::Integer`: total number of stages;
-- `c_coeffs::Tuple{Real}`: tuple with``c`` coefficients of the method;
-- `b_coeffs::Tuple{Real}`: tuple with ``b`` coefficients of the method;
-- `a_coeffs::Tuple{Tuple{Real}}`: ``a`` coefficients of the method.
+- `c_coeffs::Vector{Float64}`: tuple with``c`` coefficients of the method;
+- `b_coeffs::Vector{Float64}`: tuple with ``b`` coefficients of the method;
+- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method.
 """
-function solve_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real, 
-	initial_val::Tuple{Real}, tol::Real, max_stage::Integer, c_coeffs::Tuple{Real},
-	b_coeffs::Tuple{Real}, a_coeffs::Tuple{Tuple{Real}}
+function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
+	initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, c_coeffs::Vector{Float64},
+	b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}}
 )
     curr_val = initial_val
     curr_step = initial_step
     t = t_limits[1]  # Current argument value
 
-    solution = Dict{Real, Vector{Real}}()
+    solution = Dict{Float64, Vector{Float64}}()
 
     while t < t_limits[2]
         near_end = false
@@ -152,6 +153,8 @@ function solve_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real,
             curr_step = (t_limits[2] - t) / 2
         end
 
+        y1 = 0.
+        y2 = 0.
 
         while (true)
             # Make 2 usual steps
@@ -172,7 +175,7 @@ function solve_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real,
             w = make_step_rk(f, t, curr_val, curr_step * 2, max_stage, c_coeffs, b_coeffs, 
                 a_coeffs)
 
-            err = 1 / (2^p - 1) * maxnorm(y2 - w)
+            err = 1 / (2^max_stage - 1) * maxnorm(y2 - w)
 
             fac = 0.9
             facmin = 0.5
