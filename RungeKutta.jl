@@ -108,7 +108,8 @@ follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. To achieve more acc
 this method uses Richardson's extrapolation to control step during the computational 
 process.
 
-Return dictionary in following format: `<t>: <y(t)`.
+Return dictionary in following format: `<t>: <y(t)>` where `t` is Real and `y(t)` is
+Vector{Real}.
 
 Function `f` takes ``t`` and vector ``y`` and returns vector of real values which length
 is equal to the length of ``y``.
@@ -139,7 +140,7 @@ function solve_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real,
     curr_step = initial_step
     t = t_limits[1]  # Current argument value
 
-    solution = Dict{Real, Real}()
+    solution = Dict{Real, Vector{Real}}()
 
     while t < t_limits[2]
         near_end = false
