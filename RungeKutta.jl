@@ -145,6 +145,8 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
     solution = Dict{Float64, Vector{Float64}}()
 
+    solution[t] = curr_val
+
     while t < t_limits[2]
         near_end = false
         if t + curr_step * 2 > t_limits[2]

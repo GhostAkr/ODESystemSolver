@@ -12,7 +12,7 @@ function test_rk()
     t_limits = (0.1, 4.1)
     initial_step = 0.05
     initial_val = exact_sol(t_limits[1])
-    tol = 10^(-4)
+    tol = 1e-4
     max_stage = 4
     coeffs = coeffs_rk()
 
