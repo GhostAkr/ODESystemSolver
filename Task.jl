@@ -52,7 +52,7 @@ Return tuple with vectors of test method coefficients. Structure of returned tup
 """
 function coeffs_rk()
     c_coeffs = [0, 1 / 2, 1 / 2, 1]
-    b_coeffs = [1 / 6, 2 / 6, 2 / 6, 1 / 4]
+    b_coeffs = [1 / 6, 2 / 6, 2 / 6, 1 / 6]
     a_coeffs = [[1 / 2], [0, 1 / 2], [0, 0, 1]]
 
     return (c_coeffs, b_coeffs, a_coeffs)
