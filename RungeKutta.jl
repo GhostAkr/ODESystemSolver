@@ -112,8 +112,10 @@ follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. To achieve more acc
 this method uses Richardson's extrapolation to control step during the computational 
 process.
 
-Return dictionary in following format: `<t>: <y(t)>` where `t` is Float64 and `y(t)` is
-Vector{Float64}.
+Return several values packed in the tuple: 
+`(<solution>, <total steps count>, <rejected steps count>, <computation time>)`
+Solution is represented as a dictionary in following format: `<t>: <y(t)>` where `t` is 
+Float64 and `y(t)` is Vector{Float64}.
 
 Function `f` takes ``t`` and vector ``y`` and returns vector of real values which length
 is equal to the length of ``y``.
@@ -152,6 +154,10 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
     solution[t] = curr_val
 
+    total_steps = 0
+    rejected_steps = 0
+
+    total_time = @elapsed begin
     while t < t_limits[2]
         near_end = false
         if t + curr_step * 2 > t_limits[2]
@@ -168,6 +174,8 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
         init_facmax = facmax
 
         while true
+            total_steps += 1
+
             # Make 2 usual steps
             y1 = make_step_rk(f, t, curr_val, curr_step, max_stage, c_coeffs, b_coeffs, 
                 a_coeffs)
@@ -179,7 +187,7 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
             if near_end
                 solution[t + curr_step] = y1
                 solution[t + curr_step * 2] = y2
-                return solution
+                break
             end
 
             # Make 1 double step
@@ -197,9 +205,14 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
                 curr_step = new_step
                 break
             else
+                rejected_steps += 1
                 curr_step = new_step
                 facmax = 1
             end
+        end
+
+        if near_end
+            break
         end
 
         facmax = init_facmax
@@ -207,8 +220,9 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
         solution[t - curr_step] = y1
         solution[t] = y2
     end
+    end
 
-    return solution
+    return solution, total_steps, rejected_steps, total_time
 end  # solve_rk
 
 """

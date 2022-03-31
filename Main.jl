@@ -20,8 +20,8 @@ function test_rk()
     facmax = 3.
 
     @info("Solving ODE with Runge - Kutta method")
-    num_sol = solve_rk(f, t_limits, initial_step, initial_val, tol, max_stage, coeffs[1], 
-        coeffs[2], coeffs[3], fac, facmin, facmax)
+    (num_sol, total_steps, rejected_steps, total_time) = solve_rk(f, t_limits, initial_step, 
+        initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], fac, facmin, facmax)
 
     @info ("Validating result")
     err_vec = Vector{Real}()
@@ -38,6 +38,9 @@ function test_rk()
     end
 
     println("Max error = ", max_err)
+    println("Total steps = ", total_steps)
+    println("Rejected steps = ", rejected_steps)
+    println("Total time = ", total_time)
 end  # test_rk
 
 """
