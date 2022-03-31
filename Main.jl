@@ -48,7 +48,7 @@ function test_dp()
     initial_step = 0.05
     initial_val = exact_sol(t_limits[1])
     tol = 1e-4
-    max_stage = 4
+    max_stage = 7
     coeffs = coeffs_dp()
 
     @info("Solving ODE with Dormand - Prince method")
@@ -73,3 +73,4 @@ function test_dp()
 end  # test_dp
 
 test_rk()
+test_dp()

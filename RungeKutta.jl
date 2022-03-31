@@ -205,9 +205,10 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 end  # solve_rk
 
 """
-	solve_nested_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real,
-		initial_val::Vector{Real}, tol::Real, max_stage::Integer, c_coeffs::Vector{Real},
-		b_coeffs::Vector{Real}, bhat_coeffs::Vector{Real},  a_coeffs::Vector{Vector{Real}})
+	solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64,
+		initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
+        c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},
+        a_coeffs::Vector{Vector{Float64}})
 
 Solve system of ODEs using nested Runge - Kutta method. System of ODE can be represented
 as follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. Nested Runge - Kutta 
@@ -236,15 +237,16 @@ correspond to `max_stage` value.
 - `bhat_coeffs::Vector{Float64}`: tuple with ``\\hat{b}`` coefficients of the method;
 - `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method.
 """
-function solve_nested_rk(f::Function, t_limits::Tuple{Real}, initial_step::Real,
-	initial_val::Vector{Real}, tol::Real, max_stage::Integer, c_coeffs::Vector{Real},
-	b_coeffs::Vector{Real}, bhat_coeffs::Vector{Real},  a_coeffs::Vector{Vector{Real}}
+function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, 
+    initial_step::Float64, initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
+    c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},  
+    a_coeffs::Vector{Vector{Float64}}
 )
     curr_val = initial_val
     curr_step = initial_step
     t = t_limits[1]
 
-    solution = Dict{Float64, Vector{float64}}()
+    solution = Dict{Float64, Vector{Float64}}()
 
     solution[t] = curr_val
 
