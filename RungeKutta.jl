@@ -159,6 +159,9 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
         y1 = 0.
         y2 = 0.
+        fac = 0.9
+        facmin = 0.5
+        facmax = 3
 
         while true
             # Make 2 usual steps
@@ -181,9 +184,6 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
             err = 1 / (2^max_stage - 1) * maxnorm(y2 - w)
 
-            fac = 0.9
-            facmin = 0.5
-            facmax = 3
             new_step = curr_step * min(facmax, max(facmin, fac * 
                 (tol / err)^(1 / (max_stage))))
 
@@ -194,6 +194,7 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
                 break
             else
                 curr_step = new_step
+                facmax = 1
             end
         end
 
@@ -261,6 +262,9 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
         end
 
         y1 = 0.
+        fac = 0.9
+        facmin = 0.5
+        facmax = 3
 
         while true
             # Main step
@@ -278,9 +282,6 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
 
             err = maxnorm(y1 - y1hat)
 
-            fac = 0.9
-            facmin = 0.5
-            facmax = 3
             new_step = curr_step * min(facmax, max(facmin, fac * 
                 (tol / err)^(1 / (max_stage))))
 
