@@ -15,10 +15,13 @@ function test_rk()
     tol = 1e-4
     max_stage = 4
     coeffs = coeffs_rk()
+    fac = 0.9
+    facmin = 0.5
+    facmax = 3.
 
     @info("Solving ODE with Runge - Kutta method")
     num_sol = solve_rk(f, t_limits, initial_step, initial_val, tol, max_stage, coeffs[1], 
-        coeffs[2], coeffs[3])
+        coeffs[2], coeffs[3], fac, facmin, facmax)
 
     @info ("Validating result")
     err_vec = Vector{Real}()

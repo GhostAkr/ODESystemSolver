@@ -103,8 +103,9 @@ end  # maxnorm
 
 """
     solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
-	    initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, c_coeffs::Vector{Float64},
-	    b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}})
+	    initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
+        c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, 
+        a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64, facmax::Float64)
 
 Solve system of ODEs using Runge - Kutta method. System of ODE can be represented as
 follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. To achieve more accurancy
@@ -133,11 +134,15 @@ correspond to `max_stage` value.
 - `max_stage::Integer`: total number of stages;
 - `c_coeffs::Vector{Float64}`: tuple with``c`` coefficients of the method;
 - `b_coeffs::Vector{Float64}`: tuple with ``b`` coefficients of the method;
-- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method.
+- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method;
+- `fac::Float64`: garant factor;
+- `facmin::Float64`: max coefficient for step reduce;
+- `facmax::Float64`: max coefficient for step induce.
 """
 function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
-	initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, c_coeffs::Vector{Float64},
-	b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}}
+	initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
+    c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}},
+    fac::Float64, facmin::Float64, facmax::Float64
 )
     curr_val = initial_val
     curr_step = initial_step
@@ -159,9 +164,8 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
         y1 = 0.
         y2 = 0.
-        fac = 0.9
-        facmin = 0.5
-        facmax = 3
+
+        init_facmax = facmax
 
         while true
             # Make 2 usual steps
@@ -197,6 +201,8 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
                 facmax = 1
             end
         end
+
+        facmax = init_facmax
 
         solution[t - curr_step] = y1
         solution[t] = y2
