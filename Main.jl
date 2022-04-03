@@ -32,7 +32,8 @@ function test_rk()
 
     @info("Solving ODE with Runge - Kutta method")
     (num_sol, total_steps, rejected_steps, total_time) = solve_rk(f, t_limits, initial_step, 
-        initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], fac, facmin, facmax)
+        initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], fac, facmin, facmax,
+        true)
 
     @info ("Validating result")
     err_vec = Vector{Real}()
@@ -208,6 +209,6 @@ function output_results_rk()
     output_by_argument_rk(FacMin)
 end  # output_results_rk
 
-# test_rk()
+test_rk()
 # test_dp()
-output_results_rk()
+# output_results_rk()

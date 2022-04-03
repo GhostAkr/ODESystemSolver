@@ -1,3 +1,7 @@
+using DelimitedFiles
+
+include("Task.jl")
+
 """
 	get_kval_rk(curr_stage::Integer, t::Float64, curr_step::real, curr_val::Vector{Float64}, 
 		prev_kvals::Vector{Vector{Float64}}, c_coeffs::Vector{Float64}, 
@@ -103,7 +107,8 @@ end  # maxnorm
     solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
 	    initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
         c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, 
-        a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64, facmax::Float64)
+        a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64, facmax::Float64,
+        enable_monitoring::Bool = false)
 
 Solve system of ODEs using Runge - Kutta method. System of ODE can be represented as
 follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. To achieve more accurancy
@@ -125,6 +130,15 @@ method we consider following structure of ``a`` coefficients:
 [[a21], [a31, a32], [a41, a42, a43]]. Length of vectors with coefficients should correspond 
 to `max_stage` value.
 
+If `enable_monitoring::Bool` is set to `true` then method outputs some internal paraments to
+a file. Parametrs are exported as sets of pairs. First value in each pair is the current 
+value of argument. Second value in pair can be:
+
+- local error;
+- global error;
+- current step;
+- current function value.
+
 # Arguments
 - `f::Function`: right part of the system of ODEs;
 - `t_limits::Tuple{Float64, Float64}`: system argument limits;
@@ -137,12 +151,13 @@ to `max_stage` value.
 - `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method;
 - `fac::Float64`: garant factor;
 - `facmin::Float64`: max coefficient for step reduce;
-- `facmax::Float64`: max coefficient for step induce.
+- `facmax::Float64`: max coefficient for step induce;
+- `enable_monitoring::Bool`: true if algorithm monitoring should be enabled.
 """
 function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
 	initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
     c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}},
-    fac::Float64, facmin::Float64, facmax::Float64
+    fac::Float64, facmin::Float64, facmax::Float64, enable_monitoring::Bool = false
 )
     curr_val = initial_val
     curr_step = initial_step
@@ -154,6 +169,20 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
     total_steps = 0
     rejected_steps = 0
+
+    # Monitoring arrays
+    local_err = []
+    global_err = []
+    steps = []
+    vals = []
+
+    if enable_monitoring
+        # Initial values
+        push!(local_err, [t, 0])
+        push!(global_err, [t, 0])
+        push!(steps, [t, curr_step])
+        push!(vals, [t, curr_val])
+    end
 
     total_time = @elapsed begin
     while t < t_limits[2]
@@ -168,6 +197,9 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
         y1 = 0.
         y2 = 0.
+        err = 0.
+        glob_err_y1 = 0.
+        glob_err_y2 = 0.
 
         init_facmax = facmax
 
@@ -179,7 +211,18 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
                 a_coeffs)
             y2 = make_step_rk(f, t + curr_step, y1, curr_step, max_stage, c_coeffs, 
                 b_coeffs, a_coeffs)
-                
+
+            # Make 1 double step
+            w = make_step_rk(f, t, curr_val, curr_step * 2, max_stage, c_coeffs, b_coeffs, 
+                a_coeffs)
+
+            err = 1 / (2^max_stage - 1) * maxnorm(y2 - w)
+
+            if enable_monitoring
+                glob_err_y1 = maxnorm(y1 - exact_sol(t + curr_step))
+                glob_err_y2 = maxnorm(y2 - exact_sol(t + curr_step * 2))
+            end
+
             # If we are near the end of interval then we don't need to perform Richardson's 
             # extrapolation
             if near_end
@@ -187,12 +230,6 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
                 solution[t + curr_step * 2] = y2
                 break
             end
-
-            # Make 1 double step
-            w = make_step_rk(f, t, curr_val, curr_step * 2, max_stage, c_coeffs, b_coeffs, 
-                a_coeffs)
-
-            err = 1 / (2^max_stage - 1) * maxnorm(y2 - w)
 
             new_step = curr_step * min(facmax, max(facmin, fac * 
                 (tol / err)^(1 / (max_stage))))
@@ -210,6 +247,17 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
         end
 
         if near_end
+            if enable_monitoring
+                push!(local_err, [t + curr_step, err])
+                push!(local_err, [t + curr_step * 2, err])
+                push!(global_err, [t + curr_step, glob_err_y1])
+                push!(global_err, [t + curr_step * 2, glob_err_y2])
+                push!(steps, [t + curr_step, curr_step])
+                push!(steps, [t + curr_step * 2, curr_step])
+                push!(vals, [t + curr_step, y1])
+                push!(vals, [t + curr_step * 2, y2])
+            end
+
             break
         end
 
@@ -217,7 +265,39 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
         solution[t - curr_step] = y1
         solution[t] = y2
+
+        if enable_monitoring
+            push!(local_err, [t - curr_step, err])
+            push!(local_err, [t, err])
+            push!(global_err, [t - curr_step, glob_err_y1])
+            push!(global_err, [t, glob_err_y2])
+            push!(steps, [t - curr_step, curr_step])
+            push!(steps, [t, curr_step])
+            push!(vals, [t - curr_step, y1])
+            push!(vals, [t, y2])
+        end
     end
+    end
+
+    if enable_monitoring
+        monitorpath = "monitoring"
+        mkpath("monitoring")
+
+        open(monitorpath * "/local_err.dat", "w") do outfile
+            writedlm(outfile, local_err)
+        end
+
+        open(monitorpath * "/global_err.dat", "w") do outfile
+            writedlm(outfile, global_err)
+        end
+
+        open(monitorpath * "/steps.dat", "w") do outfile
+            writedlm(outfile, steps)
+        end
+
+        open(monitorpath * "/vals.dat", "w") do outfile
+            writedlm(outfile, vals)
+        end
     end
 
     return solution, total_steps, rejected_steps, total_time
