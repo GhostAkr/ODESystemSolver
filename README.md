@@ -17,25 +17,5 @@ ODEs.
 
 ## Example
 
-As a test example we consider following system of ODE (defined in `Task.jl`):
+As a test example we consider following problem (defined in `Task.jl`): [Task Problem](docs/example_problem.pdf).
 
-$$
-y'_1 = 2t \cdot y_1 \cdot \text{ln}(\text{max}(y_2, 10^{-3})),
-$$
-
-$$
-y'_2 = -2t \cdot y_2 \cdot \text{ln}(\text{max}(y_1, 10^{-3})).
-$$
-
-Known analytical solution for this problem is:
-
-$$
-y_1(t) = \exp(\sin(t^2)),
-$$
-
-$$
-y_2(t) = \exp(\cos(t^2)).
-$$
-
-Integration interval is $[0.1, 4.1]$. As initial conditions we consider analytical solutions
-at $t_1$: $y_1(t_1)$ and $y_2(t_1)$.
