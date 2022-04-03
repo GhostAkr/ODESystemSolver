@@ -2,7 +2,6 @@ using DelimitedFiles
 
 include("RungeKutta.jl")
 include("Task.jl")
-include("CustomLogger.jl")
 
 """
 Possible arguments which are used as iteratables when printing results to files.
