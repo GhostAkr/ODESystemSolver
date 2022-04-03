@@ -118,12 +118,12 @@ Float64 and `y(t)` is Vector{Float64}.
 Function `f` takes ``t`` and vector ``y`` and returns vector of real values which length
 is equal to the length of ``y``.
 
-``c`` and ``b`` coefficients are stored as usual tuples where each element of tuple
-denotes coefficient for appropriate stage. ``a`` coefficients are represented as nested 
-tuples. Each internal tuple contains coeffcients of one method's stage. For example for 
-4-staged method we consider following structure of ``a`` coefficients:
-((a21), (a31, a32), (a41, a42, a43)). Length of tuples with coefficients should 
-correspond to `max_stage` value.
+``c`` and ``b`` coefficients are stored as vectors where each element of vector denotes 
+coefficient for appropriate stage. ``a`` coefficients are represented as nested vectors. 
+Each internal vector contains coeffcients of one method's stage. For example for 4-staged 
+method we consider following structure of ``a`` coefficients:
+[[a21], [a31, a32], [a41, a42, a43]]. Length of vectors with coefficients should correspond 
+to `max_stage` value.
 
 # Arguments
 - `f::Function`: right part of the system of ODEs;
