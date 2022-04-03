@@ -104,6 +104,41 @@ function maxnorm(vec::Vector{Float64})
 end  # maxnorm
 
 """
+    export_monitor_info(local_err::Vector, global_err::Vector, steps::Vector, 
+        vals::Vector)
+
+Export vectors with monitoring information to external files.
+
+# Arguments
+`local_err::Vector`: local errors;
+`global_err::Vector`: global errors;
+`steps::Vector`: method steps;
+`vals::Vector`: function values.
+"""
+function export_monitor_info(local_err::Vector, global_err::Vector, steps::Vector, 
+    vals::Vector
+)
+    monitorpath = "monitoring"
+    mkpath(monitorpath)
+
+    open(monitorpath * "/local_err.dat", "w") do outfile
+        writedlm(outfile, local_err)
+    end
+
+    open(monitorpath * "/global_err.dat", "w") do outfile
+        writedlm(outfile, global_err)
+    end
+
+    open(monitorpath * "/steps.dat", "w") do outfile
+        writedlm(outfile, steps)
+    end
+
+    open(monitorpath * "/vals.dat", "w") do outfile
+        writedlm(outfile, vals)
+    end
+end
+
+"""
     solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
 	    initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
         c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, 
@@ -246,18 +281,28 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
             end
         end
 
+        curr_t1 = 0
+        curr_t2 = 0
         if near_end
-            if enable_monitoring
-                push!(local_err, [t + curr_step, err])
-                push!(local_err, [t + curr_step * 2, err])
-                push!(global_err, [t + curr_step, glob_err_y1])
-                push!(global_err, [t + curr_step * 2, glob_err_y2])
-                push!(steps, [t + curr_step, curr_step])
-                push!(steps, [t + curr_step * 2, curr_step])
-                push!(vals, [t + curr_step, y1])
-                push!(vals, [t + curr_step * 2, y2])
-            end
+            curr_t1 = t + curr_step
+            curr_t2 = t + curr_step * 2
+        else
+            curr_t1 = t - curr_step
+            curr_t2 = t
+        end
 
+        if enable_monitoring
+            push!(local_err, [curr_t1, err])
+            push!(local_err, [curr_t2, err])
+            push!(global_err, [curr_t1, glob_err_y1])
+            push!(global_err, [curr_t2, glob_err_y2])
+            push!(steps, [curr_t1, curr_step])
+            push!(steps, [curr_t2, curr_step])
+            push!(vals, [curr_t1, y1])
+            push!(vals, [curr_t2, y2])
+        end
+
+        if near_end
             break
         end
 
@@ -265,39 +310,11 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 
         solution[t - curr_step] = y1
         solution[t] = y2
-
-        if enable_monitoring
-            push!(local_err, [t - curr_step, err])
-            push!(local_err, [t, err])
-            push!(global_err, [t - curr_step, glob_err_y1])
-            push!(global_err, [t, glob_err_y2])
-            push!(steps, [t - curr_step, curr_step])
-            push!(steps, [t, curr_step])
-            push!(vals, [t - curr_step, y1])
-            push!(vals, [t, y2])
-        end
     end
     end
 
     if enable_monitoring
-        monitorpath = "monitoring"
-        mkpath("monitoring")
-
-        open(monitorpath * "/local_err.dat", "w") do outfile
-            writedlm(outfile, local_err)
-        end
-
-        open(monitorpath * "/global_err.dat", "w") do outfile
-            writedlm(outfile, global_err)
-        end
-
-        open(monitorpath * "/steps.dat", "w") do outfile
-            writedlm(outfile, steps)
-        end
-
-        open(monitorpath * "/vals.dat", "w") do outfile
-            writedlm(outfile, vals)
-        end
+        export_monitor_info(local_err, global_err, steps, vals)
     end
 
     return solution, total_steps, rejected_steps, total_time
@@ -307,7 +324,7 @@ end  # solve_rk
 	solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64,
 		initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
         c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},
-        a_coeffs::Vector{Vector{Float64}})
+        a_coeffs::Vector{Vector{Float64}}, enable_monitoring::Bool = false)
 
 Solve system of ODEs using nested Runge - Kutta method. System of ODE can be represented
 as follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. Nested Runge - Kutta 
@@ -324,6 +341,15 @@ For example for 4-staged method we consider following structure of ``a`` coeffic
 [[a21], [a31, a32], [a41, a42, a43]]. Length of tuples with coefficients should 
 correspond to `max_stage` value.
 
+If `enable_monitoring::Bool` is set to `true` then method outputs some internal paraments to
+a file. Parametrs are exported as sets of pairs. First value in each pair is the current 
+value of argument. Second value in pair can be:
+
+- local error;
+- global error;
+- current step;
+- current function value.
+
 # Arguments
 - `f::Function`: right part of the system of ODEs;
 - `t_limits::Tuple{Float64, Float64}`: system argument limits;
@@ -334,12 +360,13 @@ correspond to `max_stage` value.
 - `c_coeffs::Vector{Float64}`: tuple with``c`` coefficients of the method;
 - `b_coeffs::Vector{Float64}`: tuple with ``b`` coefficients of the method;
 - `bhat_coeffs::Vector{Float64}`: tuple with ``\\hat{b}`` coefficients of the method;
-- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method.
+- `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method;
+- `enable_monitoring::Bool`: true if algorithm monitoring should be enabled.
 """
 function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, 
     initial_step::Float64, initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
     c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},  
-    a_coeffs::Vector{Vector{Float64}}
+    a_coeffs::Vector{Vector{Float64}}, enable_monitoring::Bool = false
 )
     curr_val = initial_val
     curr_step = initial_step
@@ -348,6 +375,20 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
     solution = Dict{Float64, Vector{Float64}}()
 
     solution[t] = curr_val
+
+    # Monitoring arrays
+    local_err = []
+    global_err = []
+    steps = []
+    vals = []
+
+    if enable_monitoring
+        # Initial values
+        push!(local_err, [t, 0])
+        push!(global_err, [t, 0])
+        push!(steps, [t, curr_step])
+        push!(vals, [t, curr_val])
+    end
 
     while t < t_limits[2]
         near_end = false
@@ -360,6 +401,8 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
         end
 
         y1 = 0.
+        err = 0.
+        glob_err_y1 = 0.
         fac = 0.9
         facmin = 0.5
         facmax = 3
@@ -369,16 +412,21 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
             y1 = make_step_rk(f, t, curr_val, curr_step, max_stage, c_coeffs, b_coeffs, 
                 a_coeffs)
 
-            if near_end
-                solution[t + curr_step] = y1
-                return solution
-            end
 
             # Step for accuracy control
             y1hat = make_step_rk(f, t, curr_val, curr_step, max_stage, c_coeffs, 
                 bhat_coeffs, a_coeffs)
 
             err = maxnorm(y1 - y1hat)
+
+            if enable_monitoring
+                glob_err_y1 = maxnorm(y1 - exact_sol(t + curr_step))
+            end
+
+            if near_end
+                solution[t + curr_step] = y1
+                break
+            end
 
             new_step = curr_step * min(facmax, max(facmin, fac * 
                 (tol / err)^(1 / (max_stage))))
@@ -394,7 +442,29 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
             end
         end
 
+        curr_t = 0
+        if near_end
+            curr_t = t + curr_step
+        else
+            curr_t = t
+        end
+
+        if enable_monitoring
+            push!(local_err, [curr_t, err])
+            push!(global_err, [curr_t, glob_err_y1])
+            push!(steps, [curr_t, curr_step])
+            push!(vals, [curr_t, y1])
+        end
+
+        if near_end
+            break
+        end
+
         solution[t] = y1
+    end
+
+    if enable_monitoring
+        export_monitor_info(local_err, global_err, steps, vals)
     end
 
     return solution
