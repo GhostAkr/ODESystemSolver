@@ -101,14 +101,14 @@ values: total count of steps, count of rejected steps, total calculation time, g
 """
 function output_by_argument_rk(arg::ResultArgument)
     t_limits = (0.1, 4.1)
-    initial_steps = [step for step in 0.01:0.01:0.2]
+    initial_steps = [step for step in 0.01:0.001:0.2]
     initial_val = exact_sol(t_limits[1])
     tol = 1e-4
     max_stage = 4
     coeffs = coeffs_rk()
-    facs = [fac for fac in 0.8:0.01:0.9]
-    facmins = [facmin for facmin in 0.2:0.01:0.66]
-    facmaxes = [facmax for facmax in 1.5:0.1:5]
+    facs = [fac for fac in 0.8:0.001:0.9]
+    facmins = [facmin for facmin in 0.2:0.001:0.66]
+    facmaxes = [facmax for facmax in 1.5:0.01:5]
 
     respath = "results"
     mkpath(respath)
