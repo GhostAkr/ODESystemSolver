@@ -134,7 +134,14 @@ function export_monitor_info(local_err::Vector, global_err::Vector, steps::Vecto
     end
 
     open(monitorpath * "/vals.dat", "w") do outfile
-        writedlm(outfile, vals)
+        vals_for_write = []
+        for pair in vals
+            flat_pair = []
+            append!(flat_pair, pair[1])  # argument
+            append!(flat_pair, pair[2])  # values
+            push!(vals_for_write, flat_pair)
+        end
+        writedlm(outfile, vals_for_write)
     end
 end
 

@@ -209,6 +209,6 @@ function output_results_rk()
     output_by_argument_rk(FacMin)
 end  # output_results_rk
 
-# test_rk()
-test_dp()
+test_rk()
+# test_dp()
 # output_results_rk()
