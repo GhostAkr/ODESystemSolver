@@ -73,8 +73,9 @@ function test_dp()
     facmax = 3.
 
     @info("Solving ODE with Dormand - Prince method")
-    num_sol = solve_nested_rk(f, t_limits, initial_step, initial_val, tol, max_stage, coeffs[1], 
-        coeffs[2], coeffs[3], coeffs[4], fac, facmin, facmax, true)
+    (num_sol, total_steps, rejected_steps, total_time) = solve_nested_rk(f, t_limits, 
+        initial_step, initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], 
+        coeffs[4], fac, facmin, facmax, true)
 
     @info ("Validating result")
     err_vec = Vector{Real}()
@@ -91,6 +92,9 @@ function test_dp()
     end
 
     println("Max error = ", max_err)
+    println("Total steps = ", total_steps)
+    println("Rejected steps = ", rejected_steps)
+    println("Total time = ", total_time)
 end  # test_dp
 
 """

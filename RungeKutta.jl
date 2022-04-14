@@ -339,6 +339,11 @@ as follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. Nested Runge - K
 method makes 2 calculations at one step. Then it adapts step according to difference
 between these 2 values.
 
+Return several values packed in the tuple: 
+`(<solution>, <total steps count>, <rejected steps count>, <computation time>)`
+Solution is represented as a dictionary in following format: `<t>: <y(t)>` where `t` is 
+Float64 and `y(t)` is Vector{Float64}.
+
 Function `f` takes ``t`` and vector ``y`` and returns vector of real values which length
 is equal to the length of ``y``.
 
@@ -388,6 +393,9 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
 
     solution[t] = curr_val
 
+    total_steps = 0
+    rejected_steps = 0
+
     # Monitoring arrays
     local_err = []
     global_err = []
@@ -402,6 +410,7 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
         push!(vals, [t, curr_val])
     end
 
+    total_time = @elapsed begin
     while t < t_limits[2]
         near_end = false
         if t + curr_step > t_limits[2]
@@ -417,6 +426,8 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
         glob_err_y1 = 0.
 
         while true
+            total_steps += 1
+
             # Main step
             y1 = make_step_rk(f, t, curr_val, curr_step, max_stage, c_coeffs, b_coeffs, 
                 a_coeffs)
@@ -446,6 +457,7 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
                 curr_step = new_step
                 break
             else
+                rejected_steps += 1
                 curr_step = new_step
                 facmax = 1
             end
@@ -471,10 +483,11 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
 
         solution[t] = y1
     end
+    end
 
     if enable_monitoring
         export_monitor_info(local_err, global_err, steps, vals)
     end
 
-    return solution
+    return solution, total_steps, rejected_steps, total_time
 end  # solve_nested_rk
