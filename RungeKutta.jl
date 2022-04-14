@@ -328,10 +328,11 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
 end  # solve_rk
 
 """
-	solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64,
-		initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
+    solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64,
+        initial_val::Vector{Float64}, tol::Float64, max_stage::Integer,
         c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},
-        a_coeffs::Vector{Vector{Float64}}, enable_monitoring::Bool = false)
+        a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64,
+        facmax::Float64, enable_monitoring::Bool = false)
 
 Solve system of ODEs using nested Runge - Kutta method. System of ODE can be represented
 as follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. Nested Runge - Kutta 
@@ -368,12 +369,16 @@ value of argument. Second value in pair can be:
 - `b_coeffs::Vector{Float64}`: tuple with ``b`` coefficients of the method;
 - `bhat_coeffs::Vector{Float64}`: tuple with ``\\hat{b}`` coefficients of the method;
 - `a_coeffs::Vector{Vector{Float64}}`: ``a`` coefficients of the method;
+- `fac::Float64`: garant factor;
+- `facmin::Float64`: max coefficient for step reduce;
+- `facmax::Float64`: max coefficient for step induce;
 - `enable_monitoring::Bool`: true if algorithm monitoring should be enabled.
 """
 function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, 
     initial_step::Float64, initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
     c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},  
-    a_coeffs::Vector{Vector{Float64}}, enable_monitoring::Bool = false
+    a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64, facmax::Float64, 
+    enable_monitoring::Bool = false
 )
     curr_val = initial_val
     curr_step = initial_step
@@ -410,9 +415,6 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
         y1 = 0.
         err = 0.
         glob_err_y1 = 0.
-        fac = 0.9
-        facmin = 0.5
-        facmax = 3
 
         while true
             # Main step
