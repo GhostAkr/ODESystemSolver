@@ -231,7 +231,7 @@ function output_by_argument_dp(arg::ResultArgument)
     initial_steps = [step for step in 0.01:0.001:0.2]
     initial_val = exact_sol(t_limits[1])
     tol = 1e-4
-    max_stage = 4
+    max_stage = 7
     coeffs = coeffs_dp()
     facs = [fac for fac in 0.8:0.001:0.9]
     facmins = [facmin for facmin in 0.2:0.001:0.66]
