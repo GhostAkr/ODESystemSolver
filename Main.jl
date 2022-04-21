@@ -1,4 +1,5 @@
 using DelimitedFiles
+using Printf
 
 include("RungeKutta.jl")
 include("Task.jl")
@@ -345,7 +346,66 @@ function output_results_dp()
     output_by_argument_dp(FacMin)
 end  # output_results_rk
 
+"""
+    run_rk_tols()
+
+Run solve_rk() calculations for different tols values.
+"""
+function run_rk_tols()
+    t_limits = (0.1, 4.1)
+    initial_step = 0.05
+    initial_val = exact_sol(t_limits[1])
+    max_stage = 4
+    coeffs = coeffs_rk()
+    fac = 0.9
+    facmin = 0.5
+    facmax = 3.
+
+    tols = [1e-3, 1e-4, 1e-6]
+
+    for tol in tols
+        @info("Solving rk for tol = " * (@sprintf "%.2e" tol) * "...")
+
+        monitoring_suffix = "rk_" * (@sprintf "%.2e" tol)
+
+        (num_sol, total_steps, rejected_steps, total_time) = solve_rk(f, t_limits, 
+        initial_step, initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], fac, 
+        facmin, facmax, true, monitoring_suffix)
+    end
+end
+
+"""
+    run_dp_tols()
+
+Run solve_dp() calculations for different tols values.
+"""
+function run_dp_tols()
+    t_limits = (0.1, 4.1)
+    initial_step = 0.05
+    initial_val = exact_sol(t_limits[1])
+    max_stage = 7
+    coeffs = coeffs_dp()
+    fac = 0.9
+    facmin = 0.5
+    facmax = 3.
+
+    tols = [1e-3, 1e-4, 1e-6]
+
+    for tol in tols
+        @info("Solving dp for tol = " * (@sprintf "%.2e" tol) * "...")
+
+        monitoring_suffix = "dp_" * (@sprintf "%.2e" tol)
+
+        (num_sol, total_steps, rejected_steps, total_time) = solve_nested_rk(f, t_limits, 
+            initial_step, initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], 
+            coeffs[4], fac, facmin, facmax, true, monitoring_suffix)
+    end
+end
+
+
 # test_rk()
 # test_dp()
 # output_results_rk()
 # output_results_dp()
+run_rk_tols()
+run_dp_tols()
