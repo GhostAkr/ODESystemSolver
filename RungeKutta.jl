@@ -84,7 +84,7 @@ Computes 'max' norm of given vector `vec`. Max norm can be calculated as follows
 number.
 
 # Arguments
-`vec::Vector{Float64}`: vector which norm should be calculated.
+- `vec::Vector{Float64}`: vector which norm should be calculated.
 """
 function maxnorm(vec::Vector{Float64})
     if isempty(vec)
@@ -105,35 +105,56 @@ end  # maxnorm
 
 """
     export_monitor_info(local_err::Vector, global_err::Vector, steps::Vector, 
-        vals::Vector)
+        vals::Vector, file_suffix::Union{String, Nothing})
 
 Export vectors with monitoring information to external files.
 
 # Arguments
-`local_err::Vector`: local errors;
-`global_err::Vector`: global errors;
-`steps::Vector`: method steps;
-`vals::Vector`: function values.
+- `local_err::Vector`: local errors;
+- `global_err::Vector`: global errors;
+- `steps::Vector`: method steps;
+- `vals::Vector`: function values;
+- `file_suffix::Union{String, Nothing}`: suffix added to files with monitoring info.
 """
 function export_monitor_info(local_err::Vector, global_err::Vector, steps::Vector, 
-    vals::Vector
+    vals::Vector, file_suffix::Union{String, Nothing} = nothing
 )
     monitorpath = "monitoring"
     mkpath(monitorpath)
 
-    open(monitorpath * "/local_err.dat", "w") do outfile
+    local_err_name = "local_err"
+    if !isnothing(file_suffix)
+        local_err_name *= ("_" * file_suffix)
+    end
+    local_err_name *= ".dat"
+    open(monitorpath * "/" * local_err_name, "w") do outfile
         writedlm(outfile, local_err)
     end
 
-    open(monitorpath * "/global_err.dat", "w") do outfile
+    global_err_name = "global_err"
+    if !isnothing(file_suffix)
+        global_err_name *= ("_" * file_suffix)
+    end
+    global_err_name *= ".dat"
+    open(monitorpath * "/" * global_err_name, "w") do outfile
         writedlm(outfile, global_err)
     end
 
-    open(monitorpath * "/steps.dat", "w") do outfile
+    steps_name = "steps"
+    if !isnothing(file_suffix)
+        steps_name *= ("_" * file_suffix)
+    end
+    steps_name *= ".dat"
+    open(monitorpath * "/" * steps_name, "w") do outfile
         writedlm(outfile, steps)
     end
 
-    open(monitorpath * "/vals.dat", "w") do outfile
+    vals_name = "vals"
+    if !isnothing(file_suffix)
+        vals_name *= ("_" * file_suffix)
+    end
+    vals_name *= ".dat"
+    open(monitorpath * "/" * vals_name, "w") do outfile
         vals_for_write = []
         for pair in vals
             flat_pair = []
@@ -150,7 +171,8 @@ end
 	    initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
         c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, 
         a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64, facmax::Float64,
-        enable_monitoring::Bool = false)
+        enable_monitoring::Bool = false, monitoring_suffix::Union{String, Nothing} = 
+        nothing)
 
 Solve system of ODEs using Runge - Kutta method. System of ODE can be represented as
 follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. To achieve more accurancy
@@ -194,12 +216,14 @@ value of argument. Second value in pair can be:
 - `fac::Float64`: garant factor;
 - `facmin::Float64`: max coefficient for step reduce;
 - `facmax::Float64`: max coefficient for step induce;
-- `enable_monitoring::Bool`: true if algorithm monitoring should be enabled.
+- `enable_monitoring::Bool`: true if algorithm monitoring should be enabled;
+- `monitoring_suffix::Union{String, Nothing}`: suffix added to files with monitoring info.
 """
 function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::Float64, 
 	initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
     c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, a_coeffs::Vector{Vector{Float64}},
-    fac::Float64, facmin::Float64, facmax::Float64, enable_monitoring::Bool = false
+    fac::Float64, facmin::Float64, facmax::Float64, enable_monitoring::Bool = false,
+    monitoring_suffix::Union{String, Nothing} = nothing
 )
     curr_val = initial_val
     curr_step = initial_step
@@ -321,7 +345,7 @@ function solve_rk(f::Function, t_limits::Tuple{Float64, Float64}, initial_step::
     end
 
     if enable_monitoring
-        export_monitor_info(local_err, global_err, steps, vals)
+        export_monitor_info(local_err, global_err, steps, vals, monitoring_suffix)
     end
 
     return solution, total_steps, rejected_steps, total_time
@@ -332,7 +356,8 @@ end  # solve_rk
         initial_val::Vector{Float64}, tol::Float64, max_stage::Integer,
         c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},
         a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64,
-        facmax::Float64, enable_monitoring::Bool = false)
+        facmax::Float64, enable_monitoring::Bool = false, 
+        monitoring_suffix::Union{String, Nothing} = nothing)
 
 Solve system of ODEs using nested Runge - Kutta method. System of ODE can be represented
 as follows: ``y' = f(t, y), y(t_0) = y_0`` where y is a vector. Nested Runge - Kutta 
@@ -377,13 +402,14 @@ value of argument. Second value in pair can be:
 - `fac::Float64`: garant factor;
 - `facmin::Float64`: max coefficient for step reduce;
 - `facmax::Float64`: max coefficient for step induce;
-- `enable_monitoring::Bool`: true if algorithm monitoring should be enabled.
+- `enable_monitoring::Bool`: true if algorithm monitoring should be enabled;
+- `monitoring_suffix::Union{String, Nothing}`: suffix added to files with monitoring info.
 """
 function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64}, 
     initial_step::Float64, initial_val::Vector{Float64}, tol::Float64, max_stage::Integer, 
     c_coeffs::Vector{Float64}, b_coeffs::Vector{Float64}, bhat_coeffs::Vector{Float64},  
     a_coeffs::Vector{Vector{Float64}}, fac::Float64, facmin::Float64, facmax::Float64, 
-    enable_monitoring::Bool = false
+    enable_monitoring::Bool = false, monitoring_suffix::Union{String, Nothing} = nothing
 )
     curr_val = initial_val
     curr_step = initial_step
@@ -486,7 +512,7 @@ function solve_nested_rk(f::Function, t_limits::Tuple{Float64, Float64},
     end
 
     if enable_monitoring
-        export_monitor_info(local_err, global_err, steps, vals)
+        export_monitor_info(local_err, global_err, steps, vals, monitoring_suffix)
     end
 
     return solution, total_steps, rejected_steps, total_time

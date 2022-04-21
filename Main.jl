@@ -14,12 +14,16 @@ Possible arguments which are used as iteratables when printing results to files.
 end
 
 """
-    test_rk()
+    test_rk(monitoring_suffix::Union{String, Nothing} = nothing)
 
 Take problem and initial condiditions from `Task.jl` and solve it with Runge - Kutta method.
 This method also validates the answer.
+
+# Arguments
+- `monitoring_suffix::Union{String, Nothing} = nothing`: suffix added to files with 
+    monitoring info.
 """
-function test_rk()
+function test_rk(monitoring_suffix::Union{String, Nothing} = nothing)
     t_limits = (0.1, 4.1)
     initial_step = 0.05
     initial_val = exact_sol(t_limits[1])
@@ -33,7 +37,7 @@ function test_rk()
     @info("Solving ODE with Runge - Kutta method")
     (num_sol, total_steps, rejected_steps, total_time) = solve_rk(f, t_limits, initial_step, 
         initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], fac, facmin, facmax,
-        true)
+        true, monitoring_suffix)
 
     @info ("Validating result")
     err_vec = Vector{Real}()
@@ -56,12 +60,16 @@ function test_rk()
 end  # test_rk
 
 """
-    test_dp()
+    test_dp(monitoring_suffix::Union{String, Nothing} = nothing)
 
 Take problem and initial condiditions from `Task.jl` and solve it with Dormand - Prince 
 method. This method also validates the answer.
+
+# Arguments
+- `monitoring_suffix::Union{String, Nothing} = nothing`: suffix added to files with 
+    monitoring info.
 """
-function test_dp()
+function test_dp(monitoring_suffix::Union{String, Nothing} = nothing)
     t_limits = (0.1, 4.1)
     initial_step = 0.05
     initial_val = exact_sol(t_limits[1])
@@ -75,7 +83,7 @@ function test_dp()
     @info("Solving ODE with Dormand - Prince method")
     (num_sol, total_steps, rejected_steps, total_time) = solve_nested_rk(f, t_limits, 
         initial_step, initial_val, tol, max_stage, coeffs[1], coeffs[2], coeffs[3], 
-        coeffs[4], fac, facmin, facmax, true)
+        coeffs[4], fac, facmin, facmax, true, monitoring_suffix)
 
     @info ("Validating result")
     err_vec = Vector{Real}()
@@ -340,4 +348,4 @@ end  # output_results_rk
 # test_rk()
 # test_dp()
 # output_results_rk()
-output_results_dp()
+# output_results_dp()
